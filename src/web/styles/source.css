@@ -198,6 +198,38 @@
         animation: indexing-sweep 1.4s ease-in-out infinite;
     }
 
+    /* Live agent activity: outline, so it never fights the ring/shadow utilities on cards */
+    @keyframes live-ring-pulse {
+        0%,
+        100% {
+            outline-color: var(--live-ring-color);
+            outline-offset: 1px;
+        }
+
+        50% {
+            outline-color: color-mix(in srgb, var(--live-ring-color) 25%, transparent);
+            outline-offset: 4px;
+        }
+    }
+
+    .live-ring-running {
+        --live-ring-color: var(--color-blue-500, #3b82f6);
+        outline: 2px solid var(--live-ring-color);
+        outline-offset: 1px;
+        animation: live-ring-pulse 1.6s ease-in-out infinite;
+    }
+
+    .live-ring-asks {
+        outline: 2px solid var(--color-yellow-500, #eab308);
+        outline-offset: 1px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .live-ring-running {
+            animation: none;
+        }
+    }
+
     /* Avoid forcing internal editor heights; use component props instead */
 
     /* Fix for long content in markdown preview - scope to preview containers only */

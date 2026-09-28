@@ -5,6 +5,7 @@ import AcceptanceCriteriaProgress, { getAcceptanceCriteriaProgressCounts } from 
 import StoredDate from './StoredDate';
 import ProjectBadge from './ProjectBadge';
 import TaskTypeBadge from './TaskTypeBadge';
+import { LIVE_RING_CLASS, useLiveActivity } from '../contexts/LiveActivityContext';
 
 interface TaskCardProps {
   task: Task;
@@ -77,6 +78,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 }) => {
   const [isDragging, setIsDragging] = React.useState(false);
   const [showBranchTooltip, setShowBranchTooltip] = React.useState(false);
+  const liveState = useLiveActivity(task.id);
 
   // Check if task is from another branch (read-only)
   const isFromOtherBranch = Boolean(task.branch);
@@ -202,7 +204,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
           isSelected
             ? 'ring-2 ring-blue-500 dark:ring-blue-400 border-blue-500 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/30'
             : ''
-        }`}
+        } ${liveState ? LIVE_RING_CLASS[liveState] : ''}`}
+        data-live={liveState}
         aria-selected={isSelected}
         draggable={!isFromOtherBranch}
 		role="button"

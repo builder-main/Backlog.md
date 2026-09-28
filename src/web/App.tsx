@@ -15,6 +15,7 @@ import LoadingSpinner from './components/LoadingSpinner';
 import { SuccessToast } from './components/SuccessToast';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { TaskIdIndexProvider } from './contexts/TaskIdIndexContext';
+import { LiveActivityProvider } from './contexts/LiveActivityContext';
 import {
 	type Decision,
 	type DecisionSearchResult,
@@ -976,6 +977,7 @@ function AppContent() {
   return (
     <ThemeProvider>
       <TaskIdIndexProvider tasks={tasks}>
+      <LiveActivityProvider tasks={tasks}>
       <Routes>
             <Route
             path="/"
@@ -1111,6 +1113,7 @@ function AppContent() {
           }
         />
       )}
+      </LiveActivityProvider>
       </TaskIdIndexProvider>
     </ThemeProvider>
   );
