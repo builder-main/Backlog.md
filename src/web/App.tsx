@@ -9,6 +9,7 @@ import DraftsList from './components/DraftsList';
 import Settings from './components/Settings';
 import Statistics from './components/Statistics';
 import MilestonesPage from './components/MilestonesPage';
+import WorkUnitsPage from './components/WorkUnitsPage';
 import TaskDetailsModal from './components/TaskDetailsModal';
 import InitializationScreen from './components/InitializationScreen';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -1039,6 +1040,18 @@ function AppContent() {
               />
             }
           />
+            <Route
+              path="workunits"
+              element={
+                <WorkUnitsPage
+                  tasks={tasks}
+                  statuses={statuses}
+                  onEditTask={handleEditTask}
+                  dateFormat={config?.dateFormat}
+                  availableProjects={availableProjects}
+                />
+              }
+            />
             <Route path="drafts" element={<DraftsList onEditTask={openDraftModal} onNewDraft={handleNewDraft} dateFormat={config?.dateFormat} />} />
             <Route path="documentation" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} dateFormat={config?.dateFormat} />} />
             <Route path="documentation/:id" element={<DocumentationDetail docs={docs} onRefreshData={refreshData} dateFormat={config?.dateFormat} />} />

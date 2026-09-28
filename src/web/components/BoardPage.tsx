@@ -5,6 +5,7 @@ import { type Milestone, type Task } from '../../types';
 import { resolvePriorityValue } from '../../utils/priority-config';
 import { resolveProjectValue } from '../../utils/project-config';
 import { resolveTaskTypeValue } from '../../utils/task-type-config';
+import { WORK_UNIT_QUERY_PARAM } from '../../utils/workunit-tree';
 import { type LaneMode } from '../lib/lanes';
 
 interface BoardPageProps {
@@ -151,6 +152,18 @@ export default function BoardPage({
 	const filterType = resolveTaskTypeValue(rawFilterType, availableTypes) ?? '';
 	const rawFilterProject = searchParams.get('project') ?? '';
 	const filterProject = resolveProjectValue(rawFilterProject, availableProjects) ?? '';
+	const filterWorkUnit = searchParams.get(WORK_UNIT_QUERY_PARAM) ?? '';
+
+	const handleWorkUnitChange = (path: string) => {
+		setSearchParams(params => {
+			if (path) {
+				params.set(WORK_UNIT_QUERY_PARAM, path);
+			} else {
+				params.delete(WORK_UNIT_QUERY_PARAM);
+			}
+			return params;
+		}, { replace: true });
+	};
 
 	useEffect(() => {
 		if (
@@ -216,6 +229,8 @@ export default function BoardPage({
 				availableTypes={availableTypes}
 				filterProject={filterProject}
 				availableProjects={availableProjects}
+				filterWorkUnit={filterWorkUnit}
+				onWorkUnitChange={handleWorkUnitChange}
 				onFiltersChange={handleFiltersChange}
 				hideEmptyColumns={hideEmptyColumns}
 				dateFormat={dateFormat}

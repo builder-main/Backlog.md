@@ -9,6 +9,7 @@ import { getPriorityOptions, normalizePriorityValue } from '../../utils/priority
 import { getProjectValues, matchesProjectFilter } from '../../utils/project-config';
 import { getTaskTypeValues, matchesTaskTypeFilter } from '../../utils/task-type-config';
 import { resolveTaskById } from '../../utils/task-id';
+import { buildWorkUnitTree, indexTasksById, listWorkUnitNodes, matchesWorkUnitFilter } from '../../utils/workunit-tree';
 import TaskColumn from './TaskColumn';
 import { BoardLoadingSkeleton } from './BoardLoadingSkeleton';
 import CleanupModal from './CleanupModal';
@@ -41,6 +42,8 @@ interface BoardProps {
   availableTypes?: string[];
   filterProject?: string;
   availableProjects?: string[];
+  filterWorkUnit?: string;
+  onWorkUnitChange?: (path: string) => void;
   onFiltersChange?: (filters: { assignee: string; labels: string[]; priority: string; taskType: string; project: string }) => void;
   hideEmptyColumns?: boolean;
   dateFormat?: string;
@@ -77,6 +80,8 @@ const Board: React.FC<BoardProps> = ({
   availableTypes,
   filterProject = '',
   availableProjects,
+  filterWorkUnit = '',
+  onWorkUnitChange,
   onFiltersChange,
   hideEmptyColumns = false,
   dateFormat,
@@ -103,6 +108,8 @@ const Board: React.FC<BoardProps> = ({
   );
   const typeOptions = useMemo(() => getTaskTypeValues(availableTypes), [availableTypes]);
   const projectOptions = useMemo(() => getProjectValues(availableProjects), [availableProjects]);
+  const tasksById = useMemo(() => indexTasksById(tasks), [tasks]);
+  const workUnitOptions = useMemo(() => listWorkUnitNodes(buildWorkUnitTree(tasks)), [tasks]);
   const archivedMilestoneIds = useMemo(
     () => collectArchivedMilestoneKeys(archivedMilestones, milestoneEntities),
     [archivedMilestones, milestoneEntities]
@@ -292,8 +299,11 @@ const Board: React.FC<BoardProps> = ({
     if (filterProject) {
       result = result.filter(task => matchesProjectFilter(task.project, filterProject));
     }
+    if (filterWorkUnit) {
+      result = result.filter(task => matchesWorkUnitFilter(task, filterWorkUnit, tasksById));
+    }
     return result;
-  }, [tasks, milestoneFilter, canonicalMilestoneFilter, milestoneAliasToCanonical, filterAssignee, normalizedFilterLabels, filterPriority, filterType, filterProject]);
+  }, [tasks, milestoneFilter, canonicalMilestoneFilter, milestoneAliasToCanonical, filterAssignee, normalizedFilterLabels, filterPriority, filterType, filterProject, filterWorkUnit, tasksById]);
 
   // Handle highlighting a task (opening its edit popup)
   useEffect(() => {
@@ -492,7 +502,7 @@ const Board: React.FC<BoardProps> = ({
     [laneMode, lanes, statuses, filteredTasks, archivedMilestoneIds, milestoneEntities, archivedMilestones]
   );
 
-  const displayTasksByLane = (milestoneFilter || hasActiveFilters) ? filteredTasksByLane : tasksByLane;
+  const displayTasksByLane = (milestoneFilter || filterWorkUnit || hasActiveFilters) ? filteredTasksByLane : tasksByLane;
   const laneMetadataTasksByLane = hasActiveFilters ? filteredTasksByLane : tasksByLane;
 
   const getTasksForLane = (laneKey: string, status: string): Task[] => {
@@ -784,6 +794,20 @@ const Board: React.FC<BoardProps> = ({
                     <option value="">All projects</option>
                     {projectOptions.map(project => (
                       <option key={project} value={project}>{project}</option>
+                    ))}
+                  </select>
+                )}
+
+                {onWorkUnitChange && workUnitOptions.length > 0 && (
+                  <select
+                    aria-label="Filter board by work unit"
+                    value={filterWorkUnit}
+                    onChange={e => onWorkUnitChange(e.target.value)}
+                    className={BOARD_FILTER_SELECT_CLASS}
+                  >
+                    <option value="">All work units</option>
+                    {workUnitOptions.map(node => (
+                      <option key={node.key} value={node.key}>{node.key}</option>
                     ))}
                   </select>
                 )}

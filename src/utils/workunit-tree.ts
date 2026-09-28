@@ -7,6 +7,8 @@ export const WORK_UNIT_PATH_SEPARATOR = "/";
 /** Statuses that finish a work unit member; progress is closed / total. */
 export const WORK_UNIT_CLOSED_STATUSES: readonly string[] = ["Done", "Abandoned", "Rejected"];
 export const WORK_UNIT_BLOCKED_STATUS = "Blocked";
+/** Web query parameter carrying a work unit path filter. */
+export const WORK_UNIT_QUERY_PARAM = "wu";
 
 export interface WorkUnitStats {
 	statusCounts: Record<string, number>;
@@ -39,6 +41,12 @@ const normalizeStatus = (status: string | null | undefined): string => (status ?
 
 const CLOSED_STATUS_KEYS = new Set(WORK_UNIT_CLOSED_STATUSES.map(normalizeStatus));
 const BLOCKED_STATUS_KEY = normalizeStatus(WORK_UNIT_BLOCKED_STATUS);
+
+export const isWorkUnitClosedStatus = (status: string | null | undefined): boolean =>
+	CLOSED_STATUS_KEYS.has(normalizeStatus(status));
+
+export const isWorkUnitBlockedStatus = (status: string | null | undefined): boolean =>
+	normalizeStatus(status) === BLOCKED_STATUS_KEY;
 
 export function workUnitKey(path: string): string {
 	return path
@@ -93,11 +101,10 @@ const laterDate = (left: string | undefined, right: string | undefined): string 
 	!left || (right && right > left) ? right : left;
 
 function addTaskToStats(stats: WorkUnitStats, task: Task): void {
-	const status = normalizeStatus(task.status);
 	stats.statusCounts[task.status] = (stats.statusCounts[task.status] ?? 0) + 1;
 	stats.total += 1;
-	stats.closed += CLOSED_STATUS_KEYS.has(status) ? 1 : 0;
-	stats.blocked += status === BLOCKED_STATUS_KEY ? 1 : 0;
+	stats.closed += isWorkUnitClosedStatus(task.status) ? 1 : 0;
+	stats.blocked += isWorkUnitBlockedStatus(task.status) ? 1 : 0;
 	stats.lastActivity = laterDate(stats.lastActivity, task.updatedDate ?? task.createdDate);
 }
 
