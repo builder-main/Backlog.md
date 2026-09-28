@@ -23,6 +23,7 @@ import { launchBrowser } from "../utils/browser-launch.ts";
 import type { BrowserLoadingState } from "../utils/browser-loading-state.ts";
 import { normalizeDueDate } from "../utils/due-date.ts";
 import { isAmbiguousIdError } from "../utils/entity-id.ts";
+import { ACTIVITY_API_PATH } from "../utils/live-activity.ts";
 import { resolveMilestoneInputForStorage } from "../utils/milestone-storage.ts";
 import { DRAFT_PREFIX, extractAnyPrefix, getTaskPrefixError } from "../utils/prefix-config.ts";
 import { formatValidPriorityValues, resolvePriorityValue } from "../utils/priority-config.ts";
@@ -36,6 +37,7 @@ import { formatValidStatuses, getCanonicalStatuses, getValidStatuses } from "../
 import { isValidTaskId } from "../utils/task-id.ts";
 import { isAmbiguousTaskIdError, LOCAL_TASK_LOOKUP_HINT } from "../utils/task-path.ts";
 import { getVersion } from "../utils/version.ts";
+import { ActivityFeed } from "./activity.ts";
 
 // Regex pattern to match any prefix (letters followed by dash)
 const PREFIX_PATTERN = /^[a-zA-Z]+-/i;
@@ -260,6 +262,13 @@ export class BacklogServer {
 	private taskBroadcastTimer?: ReturnType<typeof setTimeout>;
 	private pendingDataBroadcastScope: "tasks" | "milestones" = "tasks";
 	private storeReadyBroadcasted = false;
+	private activityFeed = new ActivityFeed((message) => {
+		for (const ws of this.sockets) {
+			try {
+				ws.send(message);
+			} catch {}
+		}
+	});
 
 	constructor(projectPath: string) {
 		this.core = new Core(projectPath, { enableWatchers: true });
@@ -522,6 +531,7 @@ export class BacklogServer {
 					"/api/search": {
 						GET: async (req: Request) => await this.handleSearch(req),
 					},
+					[ACTIVITY_API_PATH]: this.activityFeed.routes,
 					// Serve files placed under backlog/assets at /assets/<relative-path>
 					"/assets/*": {
 						GET: async (req: Request) => await this.handleAssetRequest(req),
@@ -567,6 +577,7 @@ export class BacklogServer {
 				this.restoreRuntimeWorkingDirectory();
 				throw error;
 			}
+			this.activityFeed.start();
 			const url = `http://${BROWSER_HOST}:${finalPort}`;
 			console.log(`🚀 Backlog.md browser interface running at ${url}`);
 			console.log(`📊 Project: ${this.projectName}`);
@@ -604,6 +615,7 @@ export class BacklogServer {
 
 	async stop(): Promise<void> {
 		if (this.taskBroadcastTimer) clearTimeout(this.taskBroadcastTimer);
+		this.activityFeed.stop();
 		if (this._stopping) return;
 		this._stopping = true;
 
