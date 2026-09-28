@@ -41,6 +41,7 @@ import { createUrlPath } from './utils/urlHelpers';
 import { filterKanbanTasks } from './utils/kanban-tasks';
 import { reconcileById } from './utils/reconcile';
 import { parseBrowserLoadingState } from '../utils/browser-loading-state';
+import { type ActivitySession, parseActivityMessage } from '../utils/live-activity';
 
 type TaskRouteNavigationState = {
   taskModalFrom?: string;
@@ -257,6 +258,7 @@ function AppContent() {
   
   // Centralized data state
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [activitySessions, setActivitySessions] = useState<ActivitySession[]>([]);
   const kanbanTasks = React.useMemo(() => filterKanbanTasks(tasks), [tasks]);
   const [docs, setDocs] = useState<Document[]>([]);
   const [decisions, setDecisions] = useState<Decision[]>([]);
@@ -808,7 +810,10 @@ function AppContent() {
 	let disposed = false;
     ws.onmessage = (event) => {
 	  const loadingState = parseBrowserLoadingState(event.data);
-	  if (loadingState?.type === 'loading') {
+	  const activity = parseActivityMessage(event.data);
+	  if (activity) {
+		setActivitySessions(activity);
+	  } else if (loadingState?.type === 'loading') {
 		if (pendingDataRequestRef.current === null) protocolOnlyLoadingRef.current = true;
 		// Once content is on screen it stays interactive; the header indexing
 		// indicator (driven by loadingMessage) is the only loading signal. A new
@@ -977,7 +982,7 @@ function AppContent() {
   return (
     <ThemeProvider>
       <TaskIdIndexProvider tasks={tasks}>
-      <LiveActivityProvider tasks={tasks}>
+      <LiveActivityProvider tasks={tasks} sessions={activitySessions}>
       <Routes>
             <Route
             path="/"

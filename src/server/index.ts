@@ -552,6 +552,8 @@ export class BacklogServer {
 					open: (ws: ServerWebSocket) => {
 						this.sockets.add(ws);
 						ws.send(JSON.stringify(this.browserLoadingState));
+						const activity = this.activityFeed.greeting();
+						if (activity) ws.send(activity);
 						if (this.browserLoadingState.type === "loading") {
 							void this.ensureServicesReady().catch(() => {});
 						}

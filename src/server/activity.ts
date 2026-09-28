@@ -109,6 +109,16 @@ export class ActivityFeed {
 		this.sweepTimer = undefined;
 	}
 
+	/** Snapshot message for a client that just connected; undefined when nothing is live. */
+	greeting(): string | undefined {
+		//pre-condition : live session
+		const sessions = this.store.snapshot(Date.now());
+		if (sessions.length === 0) return undefined;
+
+		//operation : snapshot message
+		return JSON.stringify({ type: ACTIVITY_MESSAGE_TYPE, sessions });
+	}
+
 	private broadcast(): void {
 		this.publish(JSON.stringify({ type: ACTIVITY_MESSAGE_TYPE, sessions: this.store.snapshot(Date.now()) }));
 	}
